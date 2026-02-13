@@ -1,0 +1,197 @@
+name: Add individual package edition
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets: 
+      PRISM_API_TOKEN:
+        required: true
+        description: "PRISM API token"
+
+jobs:
+  add-edition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract and verify package info from DESCRIPTION file
+        id: pkg-info
+        run: |
+          set -euo pipefail
+
+          if [[ ! -f "DESCRIPTION" ]]; then
+            echo "Error: DESCRIPTION file not found."
+            exit 1
+          fi
+
+          PKG_NAME=$(cat DESCRIPTION | sed -n -e 's/^.*Package: //p')
+          PKG_VERSION=$(cat DESCRIPTION | sed -n -e 's/^.*Version: //p') 
+
+          echo "package_name=$PKG_NAME" >> "$GITHUB_OUTPUT"
+          echo "package_version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "Package: $PKG_NAME"
+          echo "Version: $PKG_VERSION"
+
+          REPO_NAME=$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f2)
+          if [[ "$PKG_NAME" != "$REPO_NAME" ]]; then
+            echo "Error: Package name does not match repository name."
+            echo "Package name: $PKG_NAME"
+            echo "Repository name: $REPO_NAME"
+            exit 1
+          fi
+          if [[ "v${PKG_VERSION}" != "${GITHUB_REF_NAME}" ]]; then
+            echo "Error: Package version does not match repository tag."
+            echo "Package version: $PKG_VERSION"
+            echo "Repository tag: $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+      - name: Check if registry exists
+        env:
+          PRISM_API_URL: ${{ vars.PRISM_API_URL }}
+          PRISM_API_TOKEN: ${{ secrets.PRISM_API_TOKEN }}
+          PACKAGE_NAME: ${{ steps.pkg-info.outputs.package_name }}
+          PACKAGE_VERSION: ${{ steps.pkg-info.outputs.package_version }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$PRISM_API_URL" ]]; then
+            echo "Error: PRISM_API_URL repository variable is not set."
+            exit 1
+          fi
+
+          ENDPOINT="${PRISM_API_URL}/registries/${PACKAGE_NAME}"
+
+          echo "Checking if registry exists: $ENDPOINT"
+
+          GET_REGISTRY_CODE=$(curl -s -w "%{http_code}" -o response.json \
+            -X GET "$ENDPOINT" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $PRISM_API_TOKEN")
+
+          echo "Response:"
+          cat response.json
+          echo ""
+
+          if [[ "$GET_REGISTRY_CODE" -ne 200 ]]; then
+            if [[ "$GET_REGISTRY_CODE" -ne 404 ]]; then
+              echo "API call failed with HTTP $GET_REGISTRY_CODE"
+              exit 1
+            fi
+            echo "Registry does not exist (HTTP $GET_REGISTRY_CODE). Creating..."
+            
+            PAYLOAD=$(jq -n \
+              '{ "registry_type": "individual package" }')
+            
+            POST_REGISTRY_CODE=$(curl -s -w "%{http_code}" -o response.json \
+              -X POST "$ENDPOINT" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $PRISM_API_TOKEN" \
+              -d "$PAYLOAD")
+
+            echo "Response:"
+            cat response.json
+            echo ""
+
+            if [[ "$POST_REGISTRY_CODE" -ne 201 ]]; then
+              echo "API call failed with HTTP $POST_REGISTRY_CODE"
+              exit 1
+            fi
+
+            echo "Registry created successfully (HTTP $POST_REGISTRY_CODE)"
+          fi
+
+          echo "Registry exists"
+
+      - name: Check if edition exists
+        env:
+          PRISM_API_URL: ${{ vars.PRISM_API_URL }}
+          PRISM_API_TOKEN: ${{ secrets.PRISM_API_TOKEN }}
+          PACKAGE_NAME: ${{ steps.pkg-info.outputs.package_name }}
+          PACKAGE_VERSION: ${{ steps.pkg-info.outputs.package_version }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$PRISM_API_URL" ]]; then
+            echo "Error: PRISM_API_URL repository variable is not set."
+            exit 1
+          fi
+
+          ENDPOINT="${PRISM_API_URL}/registries/${PACKAGE_NAME}/editions/${PACKAGE_VERSION}"
+
+          echo "Checking if edition exists: $ENDPOINT"
+
+          GET_EDITION_CODE=$(curl -s -w "%{http_code}" -o response.json \
+            -X GET "$ENDPOINT" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $PRISM_API_TOKEN")
+
+          echo "Response:"
+          cat response.json
+          echo ""
+
+          if [[ "$GET_EDITION_CODE" -eq 200 ]]; then
+            echo "Edition already exists (HTTP $GET_EDITION_CODE)"
+            exit 1
+          fi
+          if [[ "$GET_EDITION_CODE" -ne 404 ]]; then
+            echo "API call failed with HTTP $GET_EDITION_CODE"
+            exit 1
+          fi
+
+      - name: POST edition to registry API
+        env:
+          PRISM_API_URL: ${{ vars.PRISM_API_URL }}
+          PRISM_API_TOKEN: ${{ secrets.PRISM_API_TOKEN }}
+          PACKAGE_NAME: ${{ steps.pkg-info.outputs.package_name }}
+          PACKAGE_VERSION: ${{ steps.pkg-info.outputs.package_version }}
+          LATEST: ${{ vars.LATEST }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$PRISM_API_URL" ]]; then
+            echo "Error: PRISM_API_URL repository variable is not set."
+            exit 1
+          fi
+
+          ENDPOINT="${PRISM_API_URL}/registries/${PACKAGE_NAME}/editions/${PACKAGE_VERSION}"
+
+          if [[ "$LATEST" == "true" ]]; then
+            echo "Edition to be part of the latest edition. Setting latest=true"
+            ENDPOINT="${ENDPOINT}?latest=true"
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg name "$PACKAGE_NAME" \
+            --arg version "$PACKAGE_VERSION" \
+            '{
+              mutable: false,
+              packages: [
+                {
+                  name: $name,
+                  version: $version
+                }
+              ]
+            }')
+
+          echo "Posting to: $ENDPOINT"
+          echo "Payload:"
+          echo "$PAYLOAD" | jq .
+
+          HTTP_CODE=$(curl -s -w "%{http_code}" -o response.json \
+            -X POST "$ENDPOINT" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $PRISM_API_TOKEN" \
+            -d "$PAYLOAD")
+
+          echo "Response:"
+          cat response.json
+          echo ""
+
+          if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
+            echo "API call failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "Edition created successfully (HTTP $HTTP_CODE)"

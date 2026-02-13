@@ -1,0 +1,101 @@
+{
+  "build-ubuntu-jammy-x86-r43": {
+    "os": "ubuntu-22.04",
+    "os-name": "ubuntu",
+    "os-version": "22.04",
+    "arch": "x86_64",
+    "r-version": "4.3"
+  },
+  "build-ubuntu-jammy-x86-r44": {
+    "os": "ubuntu-22.04",
+    "os-name": "ubuntu",
+    "os-version": "22.04",
+    "arch": "x86_64",
+    "r-version": "4.4"
+  },
+  "build-ubuntu-jammy-x86-r45": {
+    "os": "ubuntu-22.04",
+    "os-name": "ubuntu",
+    "os-version": "22.04",
+    "arch": "x86_64",
+    "r-version": "4.5"
+  },
+  "build-ubuntu-noble-x86-r43": {
+    "os": "ubuntu-24.04",
+    "os-name": "ubuntu",
+    "os-version": "24.04",
+    "arch": "x86_64",
+    "r-version": "4.3"
+  },
+  "build-ubuntu-noble-x86-r44": {
+    "os": "ubuntu-24.04",
+    "os-name": "ubuntu",
+    "os-version": "24.04",
+    "arch": "x86_64",
+    "r-version": "4.4"
+  },
+  "build-ubuntu-noble-x86-r45": {
+    "os": "ubuntu-24.04",
+    "os-name": "ubuntu",
+    "os-version": "24.04",
+    "arch": "x86_64",
+    "r-version": "4.5"
+  },
+  "build-macos-arm-r44": {
+    "os": ["self-hosted", "macOS", "ARM64"],
+    "os-name": "macos",
+    "os-version": "big-sur",
+    "arch": "arm64",
+    "r-version": "4.4"
+  },
+  "build-macos-arm-r45": {
+    "os": ["self-hosted", "macOS", "ARM64"],
+    "os-name": "macos",
+    "os-version": "big-sur",
+    "arch": "arm64",
+    "r-version": "4.5"
+  }
+  // ,
+  // "build-rhel-9-x86-r44": {
+  //   "os": "rhel-9",
+  //   "os-name": "rhel",
+  //   "os-version": "9",
+  //   "arch": "x86_64",
+  //   "r-version": "4.4"
+  // },
+  // "build-rhel-9-x86-r45": {
+  //   "os": "rhel-9",
+  //   "os-name": "rhel",
+  //   "os-version": "9",
+  //   "arch": "x86_64",
+  //   "r-version": "4.5"
+  // },
+  // "build-rhel-8-x86-r44": {
+  //   "os": "rhel-8",
+  //   "os-name": "rhel",
+  //   "os-version": "8",
+  //   "arch": "x86_64",
+  //   "r-version": "4.4"
+  // },
+  // "build-rhel-8-x86-r45": {
+  //   "os": "rhel-8",
+  //   "os-name": "rhel",
+  //   "os-version": "8",
+  //   "arch": "x86_64",
+  //   "r-version": "4.5"
+  // },
+  // "build-almalinux-8-x86-r44": {
+  //   "os": "almalinux-8",
+  //   "os-name": "almalinux",
+  //   "os-version": "8",
+  //   "arch": "x86_64",
+  //   "r-version": "4.4"
+  // },
+  // "build-almalinux-8-x86-r45": {
+  //   "os": "almalinux-8",
+  //   "os-name": "almalinux",
+  //   "os-version": "8",
+  //   "arch": "x86_64",
+  //   "r-version": "4.5"
+  // }
+}

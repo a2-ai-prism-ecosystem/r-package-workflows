@@ -1,0 +1,153 @@
+name: Release (with API)
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      build-ubuntu-jammy-x86-r43:
+        type: boolean
+        default: false
+      build-ubuntu-jammy-x86-r44:
+        type: boolean
+        default: false
+      build-ubuntu-jammy-x86-r45:
+        type: boolean
+        default: false
+      build-ubuntu-noble-x86-r43:
+        type: boolean
+        default: false
+      build-ubuntu-noble-x86-r44:
+        type: boolean
+        default: false
+      build-ubuntu-noble-x86-r45:
+        type: boolean
+        default: false
+      build-macos-arm-r44:
+        type: boolean
+        default: false
+      build-macos-arm-r45:
+        type: boolean
+        default: false
+      build-rhel-9-x86-r44:
+        type: boolean
+        default: false
+      build-rhel-9-x86-r45:
+        type: boolean
+        default: false
+      build-rhel-8-x86-r44:
+        type: boolean
+        default: false
+      build-rhel-8-x86-r45:
+        type: boolean
+        default: false
+      build-almalinux-8-x86-r44:
+        type: boolean
+        default: false
+      build-almalinux-8-x86-r45:
+        type: boolean
+        default: false
+
+jobs:
+  create-draft-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          tag_name: ${{ github.ref_name }}
+
+  build-source:
+    uses: ./.github/workflows/build-source.yaml
+
+  upload-source-to-api:
+    needs: build-source
+    uses: ./.github/workflows/upload-tarball-to-api.yaml
+    with:
+      artifact-name: source-tarball
+    secrets: inherit
+
+  build-binary:
+    needs: build-source
+    uses: ./.github/workflows/build-binary.yaml
+    with:
+      source-artifact: source-tarball
+      build-ubuntu-jammy-x86-r43:
+        ${{ inputs.build-ubuntu-jammy-x86-r43 }}
+      build-ubuntu-jammy-x86-r44:
+        ${{ inputs.build-ubuntu-jammy-x86-r44 }}
+      build-ubuntu-jammy-x86-r45:
+        ${{ inputs.build-ubuntu-jammy-x86-r45 }}
+      build-ubuntu-noble-x86-r43:
+        ${{ inputs.build-ubuntu-noble-x86-r43 }}
+      build-ubuntu-noble-x86-r44:
+        ${{ inputs.build-ubuntu-noble-x86-r44 }}
+      build-ubuntu-noble-x86-r45:
+        ${{ inputs.build-ubuntu-noble-x86-r45 }}
+      build-macos-arm-r44:
+        ${{ inputs.build-macos-arm-r44 }}
+      build-macos-arm-r45:
+        ${{ inputs.build-macos-arm-r45 }}
+      build-rhel-9-x86-r44:
+        ${{ inputs.build-rhel-9-x86-r44 }}
+      build-rhel-9-x86-r45:
+        ${{ inputs.build-rhel-9-x86-r45 }}
+      build-rhel-8-x86-r44:
+        ${{ inputs.build-rhel-8-x86-r44 }}
+      build-rhel-8-x86-r45:
+        ${{ inputs.build-rhel-8-x86-r45 }}
+      build-almalinux-8-x86-r44:
+        ${{ inputs.build-almalinux-8-x86-r44 }}
+      build-almalinux-8-x86-r45:
+        ${{ inputs.build-almalinux-8-x86-r45 }}
+
+  upload-binary-to-api:
+    needs: build-binary
+    uses: ./.github/workflows/upload-tarball-to-api.yaml
+    with:
+      artifact-name: binary-tarballs
+    secrets: inherit
+
+  finalize-release:
+    needs: [build-source, build-binary, upload-binary-to-api]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*-tarball*'
+          merge-multiple: true
+      
+      - name: Upload assets and publish release
+        run: |
+          shopt -s nullglob
+          for tarball in *.tar.gz *.tgz *.zip; do
+            gh release upload "${{ github.ref_name }}" "$tarball" --clobber
+          done
+
+          # gh release upload "${{ github.ref_name }}" *.tar.gz --clobber
+          # gh release upload "${{ github.ref_name }}" *.tgz --clobber
+          # gh release upload "${{ github.ref_name }}" *.zip --clobber
+          
+          gh release edit "${{ github.ref_name }}" --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cleanup-on-failure:
+    if: failure()
+    needs: [create-draft-release, build-source, build-binary, upload-source-to-api, upload-binary-to-api]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete draft release
+        run: |
+          if gh release view "${{ github.ref_name }}" --json isDraft -q '.isDraft' 2>/dev/null | grep -q true; then
+            gh release delete "${{ github.ref_name }}" --yes
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
