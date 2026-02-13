@@ -6,15 +6,16 @@ on:
 
 jobs:
   release:
+    if: github.repository != 'a2-ai-prism-ecosystem/r-package-workflows'
     # ============================================================
     # Uncomment ONE release workflow:
     # ============================================================
     # create release
-    uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-base.yaml@v1
+    uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-base.yaml@devel
     # create release, build and upload to PRISM
-    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-with-api.yaml@v1
+    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-with-api.yaml@devel
     # create release, build and upload to PRISM, creating an individual package edition as well
-    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-with-api-and-individual-package-edition.yaml@v1
+    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-with-api-and-individual-package-edition.yaml@devel
 
     # ============================================================
     # Uncomment the "with" section to enable binary building for your R package:
