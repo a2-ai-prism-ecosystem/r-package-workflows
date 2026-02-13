@@ -11,11 +11,11 @@ jobs:
     # Uncomment ONE release workflow:
     # ============================================================
     # create release
-    uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-base.yaml@devel
+    uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-gh.yaml@devel
     # create release, build and upload to PRISM
-    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-with-api.yaml@devel
+    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-gh-prism.yaml@devel
     # create release, build and upload to PRISM, creating an individual package edition as well
-    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-with-api-and-individual-package-edition.yaml@devel
+    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-gh-prism-edition.yaml@devel
 
     # ============================================================
     # Uncomment the "with" section to enable binary building for your R package:

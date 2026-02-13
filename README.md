@@ -12,9 +12,9 @@ Reusable GitHub Actions workflows for building and releasing R packages, with op
 Key workflows in this repo:
 
 - `release.yaml`: template workflow you copy into your package repo.
-- `release-base.yaml`: draft release + source/binary artifacts + publish release.
-- `release-with-api.yaml`: everything in base, plus API uploads.
-- `release-with-api-and-individual-package-edition.yaml`: API uploads + edition creation.
+- `release-gh.yaml`: draft release + source/binary artifacts + publish release.
+- `release-gh-prism.yaml`: everything in base, plus API uploads.
+- `release-gh-prism-edition.yaml`: API uploads + edition creation.
 - `R-CMD-check.yaml`: multi-platform package checks for validation between releases.
 
 ## What you copy to your package repository
@@ -31,9 +31,9 @@ Copy these files into your package repo under `.github/workflows/`:
 
 1. Copy `release.yaml` into `.github/workflows/release.yaml`.
 2. In the `release` job, enable exactly one `uses:` target:
-   - `release-base.yaml` (GitHub release only)
-   - `release-with-api.yaml` (release + PRISM uploads)
-   - `release-with-api-and-individual-package-edition.yaml` (release + uploads + edition)
+   - `release-gh.yaml` (GitHub release only)
+   - `release-gh-prism.yaml` (release + PRISM uploads)
+   - `release-gh-prism-edition.yaml` (release + uploads + edition)
 3. If your copied file has a local `uses: ./.github/workflows/...` reference, remove/comment it and keep the remote `a2-ai-prism-ecosystem/r-package-workflows/...@v1` reference.
 4. Uncomment the `with:` block and enable the platform flags you want for binary builds.
 5. Push a tag like `v1.2.3` to trigger the release workflow.
@@ -48,9 +48,9 @@ Depending on release mode, configure these in your package repo settings:
 
 Quick reference:
 
-- `release-base.yaml`: no PRISM variables/secrets required.
-- `release-with-api.yaml`: requires `PRISM_API_URL` + `PRISM_API_TOKEN`.
-- `release-with-api-and-individual-package-edition.yaml`: requires `PRISM_API_URL` + `PRISM_API_TOKEN`; optionally uses `LATEST`.
+- `release-gh.yaml`: no PRISM variables/secrets required.
+- `release-gh-prism.yaml`: requires `PRISM_API_URL` + `PRISM_API_TOKEN`.
+- `release-gh-prism-edition.yaml`: requires `PRISM_API_URL` + `PRISM_API_TOKEN`; optionally uses `LATEST`.
 
 ## R-CMD-check usage (recommended frequent validation)
 
