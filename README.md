@@ -17,40 +17,45 @@ Key workflows in this repo:
 - `release-gh-prism-edition.yaml`: API uploads + edition creation.
 - `R-CMD-check.yaml`: multi-platform package checks for validation between releases.
 
-## What you copy to your package repository
+## Quick start in your package repo
 
 Copy these files into your package repo under `.github/workflows/`:
 
-- `release.yaml`
-- `R-CMD-check.yaml`
+- `release.yaml` (tag-triggered release workflow, runs on `v*`)
+- `R-CMD-check.yaml` (frequent cross-platform validation workflow)
 
-`release.yaml` is tag-triggered (`v*`) and intended for release publishing.
-`R-CMD-check.yaml` is for more frequent validation so you can catch cross-platform issues earlier than release time.
+Edit the copied `.github/workflows/release.yaml` in place:
 
-## Release setup (in your package repo)
+- Keep exactly one active `uses:` line in the `release` job.
+- Uncomment `with:` and the build flags you want if you need binaries.
+- Leave `secrets: inherit` as-is.
+- Push a tag like `v1.2.3` to trigger the workflow.
 
-1. Copy `release.yaml` into `.github/workflows/release.yaml`.
-2. In the `release` job, enable exactly one `uses:` target:
-   - `release-gh.yaml` (GitHub release only)
-   - `release-gh-prism.yaml` (release + PRISM uploads)
-   - `release-gh-prism-edition.yaml` (release + uploads + edition)
-3. If your copied file has a local `uses: ./.github/workflows/...` reference, remove/comment it and keep the remote `a2-ai-prism-ecosystem/r-package-workflows/...@v1` reference.
-4. Uncomment the `with:` block and enable the platform flags you want for binary builds.
-5. Push a tag like `v1.2.3` to trigger the release workflow.
+Example edit in the copied template:
+
+```yaml
+jobs:
+  release:
+    # create release
+    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-gh.yaml@devel
+    # create release, build and upload to PRISM
+    uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-gh-prism.yaml@devel
+    # create release, build and upload to PRISM, creating an individual package edition as well
+    # uses: a2-ai-prism-ecosystem/r-package-workflows/.github/workflows/release-gh-prism-edition.yaml@devel
+
+    with:
+      build-ubuntu-jammy-x86-r45: true
+      build-macos-arm-r45: true
+    secrets: inherit
+```
 
 ## Required repo configuration
 
-Depending on release mode, configure these in your package repo settings:
-
-- `Repository variable: PRISM_API_URL` (required for API upload/edition flows)
-- `Repository secret: PRISM_API_TOKEN` (required for API upload/edition flows)
-- `Repository variable: LATEST` (optional, only used by edition flow; set to `true` to mark as latest)
-
-Quick reference:
-
-- `release-gh.yaml`: no PRISM variables/secrets required.
-- `release-gh-prism.yaml`: requires `PRISM_API_URL` + `PRISM_API_TOKEN`.
-- `release-gh-prism-edition.yaml`: requires `PRISM_API_URL` + `PRISM_API_TOKEN`; optionally uses `LATEST`.
+| Release workflow | `PRISM_API_URL` | `PRISM_API_TOKEN` | `LATEST` |
+| --- | --- | --- | --- |
+| `release-gh.yaml` | Not required | Not required | Not used |
+| `release-gh-prism.yaml` | Required | Required | Not used |
+| `release-gh-prism-edition.yaml` | Required | Required | Optional (`true` marks latest) |
 
 ## R-CMD-check usage (recommended frequent validation)
 
@@ -60,5 +65,3 @@ By default this workflow supports manual runs (`workflow_dispatch`) and reusable
 
 - `pull_request`
 - `push` to your default branch
-
-This helps answer: "Did I break the package on platforms I am not testing locally?"
