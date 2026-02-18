@@ -7,6 +7,9 @@ on:
 jobs:
   release:
     if: github.repository != 'a2-ai-prism-ecosystem/r-package-workflows'
+    permissions: 
+      id-token: write
+      contents: write
     # ============================================================
     # Uncomment ONE release workflow:
     # ============================================================

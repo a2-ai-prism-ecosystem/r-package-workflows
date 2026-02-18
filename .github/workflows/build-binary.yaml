@@ -103,6 +103,9 @@ jobs:
   build-binary:
     needs: setup
     if: ${{ needs.setup.outputs.has-builds == 'true' }}
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
@@ -112,6 +115,30 @@ jobs:
         with:
           name: ${{ inputs.source-artifact }}
           path: source-tarball/
+
+      - name: Install AWS CLI (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          if ! command -v aws &> /dev/null; then
+            brew install awscli
+          fi
+
+      # - name: Configure AWS credentials via OIDC
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME  # FIXME
+      #     aws-region: us-east-1  # FIXME
+
+      # - name: Download prism-ray from S3
+      #   run: |
+      #     aws s3 cp s3://BUCKET/path/to/tool /usr/local/bin/tool-name  # FIXME
+      #     chmod +x /usr/local/bin/tool-name # FIXME
+
+      # # TODO implement, remove R CMD build and other steps 
+      # - name: Build package with prism-ray
+      #   run: |
+      #     set -euo pipefail
+      #     prism-ray 
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
