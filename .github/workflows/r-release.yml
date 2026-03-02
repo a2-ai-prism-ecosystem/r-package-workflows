@@ -145,15 +145,14 @@ jobs:
           rig add ${{ steps.r-version.outputs.r_version }}
           echo "/opt/R/${{ steps.r-version.outputs.r_version }}/bin" >> $GITHUB_PATH
 
+      # -- Install rv -------------------------------------------------------
+      - name: Install the latest version of rv
+        uses: a2-ai/setup-rv@main
+
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # TODO: If your package requires a compiled-language toolchain, add
       # the installation steps here.
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-      # -- Install rv and resolve R package dependencies ---------------------
-      - name: Install the latest version of rv
-        uses: a2-ai/setup-rv@main
-
       
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # TODO: If your package relies on system libraries, add
@@ -279,6 +278,10 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
 
+      # -- Install rv -------------------------------------------------------
+      - name: Install the latest version of rv
+        uses: a2-ai/setup-rv@main
+
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # TODO: If your package requires a compiled-language toolchain, add
       # the installation steps here.
@@ -294,10 +297,6 @@ jobs:
       # NOTE: remember to add steps for each OS type required 
       # by the platforms specified in the matrix.
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-      # -- Install rv and resolve R package dependencies ---------------------
-      - name: Install the latest version of rv
-        uses: a2-ai/setup-rv@main
 
       - name: replace-rversion
         run: |
