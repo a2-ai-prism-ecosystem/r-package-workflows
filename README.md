@@ -7,7 +7,7 @@ Reusable GitHub Actions workflows for developing, building, releasing, and deplo
 - [r-package-workflows](#r-package-workflows)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
-    - [Important dependency model (`rv`)](#important-dependency-model-rv)
+    - [Important: dependency on (`rv`)](#important-dependency-on-rv)
     - [Using `rv` in your R package](#using-rv-in-your-r-package)
       - [Example `rproject.toml`](#example-rprojecttoml)
   - [Development workflows](#development-workflows)
@@ -43,7 +43,7 @@ These workflows support two complementary goals:
 1. **Development validation**: run repeatable package checks across OS/R versions before tagging releases.
 2. **Release CI/CD**: build source + binary artifacts, publish GitHub Releases, and optionally deploy to PRISM.
 
-### Important dependency model (`rv`)
+### Important: dependency on `rv`
 
 In addition to standard R package structure (see [R Packages](https://r-pkgs.org)), these workflows assume your project uses [`rv`](https://a2-ai.github.io/rv-docs/) for dependency management.
 
@@ -53,7 +53,7 @@ In addition to standard R package structure (see [R Packages](https://r-pkgs.org
 
 Keep runtime dependencies in the `DESCRIPTION` file, and use `rproject.toml` for development dependencies.
 
-Your `rproject.toml` should also include a self path dependency (the package under development), so `rv` can correctly resolve and install the package dependency graph.
+Your `rproject.toml` should also include a self path dependency (the package under development), so `rv` can correctly resolve and install the package's dependencies.
 
 #### Example `rproject.toml`
 
@@ -82,7 +82,7 @@ dependencies = [
 
 ### `R-CMD-check.yaml`
 
-Use `.github/workflows/R-CMD-check.yaml` as your **continuous validation workflow** to catch compilation, dependency, and packaging issues early.
+Use `R-CMD-check.yaml` as your **continuous validation workflow** to catch compilation, dependency, and packaging issues early.
 
 This workflow will:
 
@@ -93,7 +93,7 @@ You may need to modify the triggers to this workflow as desired to get frequent 
 
 ## Release and deploy Workflows
 
-The workflows, `r-release.yml`, and `deploy-prism.yml` work together to assist in releasing tagged versions of your R packages, optionally deploying them to a PRISM instance.
+The workflows `r-release.yml` and `deploy-prism.yml` work together to assist in releasing tagged versions of your R packages, optionally deploying them to a PRISM instance.
 
 ### Quick start
 
@@ -244,7 +244,7 @@ In your GitHub repo, go to **Settings > Secrets and variables > Actions** and ad
 | Variable | `PRISM_API_URL` | Base URL of your PRISM instance |
 | Secret | `PRISM_API_TOKEN` | API token for PRISM authentication |
 
-If you are not using PRISM, no additional secrets or variables are needed — `GITHUB_TOKEN` is provided automatically.
+If you are not using PRISM, no additional secrets or variables are needed.
 
 #### Step 4: Tag and release
 
@@ -255,7 +255,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-This triggers `r-release.yml` to build the source tarball, build binaries for each platform in the matrix, and publish everything as a GitHub Release.
+This triggers `r-release.yml` to build the source tarball, build binary artifacts for each platform in the matrix, and publish everything as a GitHub Release.
 
 Tags ending in `-rc<N>` (e.g. `v1.0.0-rc1`) are published as **pre-releases**.
 
@@ -273,7 +273,7 @@ If `deploy-prism.yml` is included, then that workflow will fire upon completion 
 
 ### `r-release.yml`
 
-Reusable build workflow. This is where all R package building of src and binary tarballs happens.
+Reusable build workflow. This is where all R package building of src and binary archives happens.
 
 - **Triggers:** `push` on `v*` tags, `workflow_dispatch` with a `tag` input
 
@@ -326,4 +326,4 @@ Deploys release artifacts to a PRISM instance after `r-release.yml` completes. Y
 | --- | --- |
 | `preflight` | Validates PRISM credentials exist. Skips gracefully on auto-trigger; fails on manual dispatch. |
 | `resolve-inputs` | Resolves tag, package info, and edition settings from the build manifest or manual inputs. |
-| `deploy` | Publishes to PRISM, optionally updates shared edition and/or creates individual package edition. |
+| `deploy` | Publishe release artifacts to PRISM, optionally updates shared edition and/or creates individual package edition. |
