@@ -109,14 +109,19 @@ jobs:
           fetch-depth: 0
           ref: ${{ inputs.tag }}
 
+      - name: Get R version from rproject.toml
+        id: r-version
+        run: |
+          R_VERSION=$(grep '^r_version = ".*"$' rproject.toml | sed 's/^r_version = ".*"$/4.5/')
+          echo "r_version=$R_VERSION" >> $GITHUB_OUTPUT
+
       # -- Install R via rig ------------------------------------------------
-      # FIXME: Set the R version to match your package's requirements.
       - name: Setup R
         run: |
           dnf install -y curl
           curl -Ls https://github.com/r-lib/rig/releases/download/latest/rig-linux-x86_64-latest.tar.gz | tar xz -C /usr/local
-          rig add 4.5
-          echo "/opt/R/4.5/bin" >> $GITHUB_PATH
+          rig add ${{ steps.r-version.outputs.r_version }}
+          echo "/opt/R/${{ steps.r-version.outputs.r_version }}/bin" >> $GITHUB_PATH
 
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # TODO: If your package requires a compiled-language toolchain, add
@@ -160,7 +165,7 @@ jobs:
           library: ${{ steps.library.outputs.result }}
           resave-data: false          # Set to true if your package ships data/ that needs resaving
           md5: true
-          user: FIXME                 # FIXME: Set to your build user (e.g. your GitHub org bot)
+          user: r-releaser
           build-vignettes: false      # Set to true if your package includes vignettes
           metadata: |
             {

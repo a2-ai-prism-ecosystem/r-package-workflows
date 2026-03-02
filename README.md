@@ -18,9 +18,7 @@ Reusable GitHub Actions workflows for developing, building, releasing, and deplo
     - [Cookbook](#cookbook)
       - [Step 1: Copy the workflow files](#step-1-copy-the-workflow-files)
       - [Step 2: Configure `r-release-linux.yml`](#step-2-configure-r-release-linuxyml)
-        - [R version](#r-version)
-        - [Compiled-language toolchain, system dependencies, etc.](#compiled-language-toolchain-system-dependencies-etc)
-        - [Build user](#build-user)
+        - [Compiled-language toolchain, system dependencies, and other platform steps](#compiled-language-toolchain-system-dependencies-and-other-platform-steps)
         - [Build options](#build-options)
         - [Platform matrices](#platform-matrices)
           - [Container matrix entries](#container-matrix-entries)
@@ -156,30 +154,7 @@ curl -sL https://raw.githubusercontent.com/a2-ai-prism-ecosystem/r-package-workf
 
 #### Step 2: Configure `r-release-linux.yml`
 
-Open `.github/workflows/r-release-linux.yml` and work through the `FIXME` / `TODO` markers.
-
-##### R version
-
-In the `build-primary` job, find the **Setup R** step and set the R version your package targets:
-
-```yaml
-      - name: Setup R
-        run: |
-          dnf install -y curl
-          curl -Ls https://github.com/r-lib/rig/releases/download/latest/rig-linux-x86_64-latest.tar.gz | tar xz -C /usr/local
-          rig add 4.5              # <-- set your R version
-          echo "/opt/R/4.5/bin" >> $GITHUB_PATH   # <-- must match
-```
-
-Make sure the **Pin rproject.toml** step further down also matches:
-
-```yaml
-      - name: Pin rproject.toml to primary R version
-        run: |
-          sed -i 's|^r_version = ".*"$|r_version = "4.5"|' rproject.toml   # <-- must match
-```
-
-##### Compiled-language toolchain, system dependencies, etc.
+##### Compiled-language toolchain, system dependencies, and other platform steps
 
 If your package uses a compiled language, add the installation steps where the `TODO` blocks appear. There are TODO blocks in `build-primary`, `build-bin-bare`, and `build-bin-container` — add matching steps in each. For example, a Rust-based package would add:
 
@@ -204,17 +179,9 @@ Each job also has a `TODO` block for system library installation. Add your packa
 
 Keep the same system dependency list in `build-primary` and `build-bin-container`. For `build-bin-bare` (which runs on Ubuntu bare-metal runners), use `apt` package names instead (e.g. `libcurl4-openssl-dev` instead of `libcurl-devel`).
 
-##### Build user
-
-Set the `user` field in the **Build source tarball** step:
-
-```yaml
-    user: FIXME   # <-- your build user (e.g. your GitHub org bot username)
-```
-
 ##### Build options
 
-In the same step, review these flags:
+In the **Build source tarball** step, review these flags:
 
 ```yaml
     resave-data: false      # true if your package ships data/ that needs resaving
@@ -275,7 +242,7 @@ env:
   EDITION: 'FIXME'                  # <-- your PRISM edition name (e.g. 'dev', 'stable')
 ```
 
-Also update the `default:` values for `registry` and `edition` under `workflow_dispatch.inputs` so they match when triggering manually.
+Optionally, update the `default:` values for `registry` and `edition` under `workflow_dispatch.inputs` so they match when triggering manually.
 
 ##### Required secrets and variables
 
