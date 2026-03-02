@@ -29,7 +29,7 @@
 name: Deploy to PRISM
 
 on:
-  # Auto-trigger: runs after the "R Release" workflow completes successfully.
+  # Auto-trigger: runs after the "R Build and Release" workflow completes successfully.
   workflow_run:
     workflows: ["R Build and Release"]
     types:
