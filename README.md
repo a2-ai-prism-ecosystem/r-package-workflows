@@ -307,10 +307,8 @@ Called by `release.yml` (or any workflow) with a `tag` input via `workflow_call`
 
 | What | Where | Notes |
 | --- | --- | --- |
-| Primary R version | `build-primary` > Setup R + Pin rproject.toml | Must match in both places |
-| Toolchain (Rust, C++, etc.) | TODO blocks in `build-primary`, `build-bin-bare`, `build-bin-container` | Add matching steps in each |
+| Toolchain | TODO blocks in `build-primary`, `build-bin-bare`, `build-bin-container` | Language toolchains, etc. Add matching steps in each block for each OS |
 | System deps | TODO blocks in each build job | RPM names for container jobs, deb names for bare-metal |
-| Build user | `build-primary` > Build source tarball > `user: FIXME` | Your org bot username |
 | Build options | `build-primary` > Build source tarball | `resave-data`, `build-vignettes` |
 | Platform matrices | `plan-matrices` job | Two JSON arrays: bare-metal + container |
 

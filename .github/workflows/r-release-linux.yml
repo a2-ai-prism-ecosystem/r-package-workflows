@@ -201,12 +201,6 @@ jobs:
           if-no-files-found: error
 
       # -- Build binary for the primary platform -----------------------------
-      # FIXME: The R version here must match the one installed above.
-      - name: Pin rproject.toml to primary R version
-        run: |
-          sed -i 's|^r_version = ".*"$|r_version = "4.5"|' rproject.toml
-          cat rproject.toml
-
       - name: Build binary
         id: releaser-bin
         uses: A2-ai/r-releaser/build-bin@deploy-prism
