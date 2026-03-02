@@ -17,7 +17,7 @@ Reusable GitHub Actions workflows for developing, building, releasing, and deplo
     - [Workflow overview](#workflow-overview)
     - [Cookbook](#cookbook)
       - [Step 1: Copy the workflow files](#step-1-copy-the-workflow-files)
-      - [Step 2: Configure `r-release-linux.yml`](#step-2-configure-r-release-linuxyml)
+      - [Step 2: Configure `r-release.yml`](#step-2-configure-r-releaseyml)
         - [Compiled-language toolchain, system dependencies, and other platform steps](#compiled-language-toolchain-system-dependencies-and-other-platform-steps)
         - [Build options](#build-options)
         - [Platform matrices](#platform-matrices)
@@ -28,15 +28,13 @@ Reusable GitHub Actions workflows for developing, building, releasing, and deplo
       - [Step 4: Tag and release](#step-4-tag-and-release)
       - [Step 5: Verify](#step-5-verify)
   - [Release and Deploy Workflow reference](#release-and-deploy-workflow-reference)
-    - [`release.yml`](#releaseyml)
-    - [`r-release-linux.yml`](#r-release-linuxyml)
-      - [Triggers](#triggers)
-      - [Jobs](#jobs)
+    - [`r-release.yml`](#r-releaseyml)
+      - [Release Jobs](#release-jobs)
       - [Key customization points](#key-customization-points)
-    - [`deploy-prism.yml`](#deploy-prismyml)
-      - [Triggers](#triggers-1)
+    - [`deploy-prism.yml` (optional)](#deploy-prismyml-optional)
+      - [Triggers](#triggers)
       - [`env:` block (auto-deploy defaults)](#env-block-auto-deploy-defaults)
-      - [Jobs](#jobs-1)
+      - [Deploy Jobs](#deploy-jobs)
 
 ## Overview
 
@@ -95,7 +93,7 @@ You may need to modify the triggers to this workflow as desired to get frequent 
 
 ## Release and deploy Workflows
 
-The workflows `release.yml`, `r-release-linux.yml`, and `deploy-prism.yml` work together to assist in releasing tagged versions of your R pacakges.
+The workflows, `r-release.yml`, and `deploy-prism.yml` work together to assist in releasing tagged versions of your R packages, optionally deploying them to a PRISM instance.
 
 ### Quick start
 
@@ -103,11 +101,8 @@ The workflows `release.yml`, `r-release-linux.yml`, and `deploy-prism.yml` work 
 # 1. Copy the workflow files into your R package repo
 mkdir -p .github/workflows
 
-curl -sL https://raw.githubusercontent.com/a2-ai-prism-ecosystem/r-package-workflows/main/.github/workflows/release.yml \
-  -o .github/workflows/release.yml
-
-curl -sL https://raw.githubusercontent.com/a2-ai-prism-ecosystem/r-package-workflows/main/.github/workflows/r-release-linux.yml \
-  -o .github/workflows/r-release-linux.yml
+curl -sL https://raw.githubusercontent.com/a2-ai-prism-ecosystem/r-package-workflows/main/.github/workflows/r-release.yml \
+  -o .github/workflows/r-release.yml
 
 # Optional: PRISM deployment
 curl -sL https://raw.githubusercontent.com/a2-ai-prism-ecosystem/r-package-workflows/main/.github/workflows/deploy-prism.yml \
@@ -126,37 +121,33 @@ See the [Cookbook](#cookbook) below for a detailed walkthrough.
 
 | File | Purpose | Required? |
 | --- | --- | --- |
-| `release.yml` | Thin orchestrator — triggers on `v*` tags and calls the build workflow | Yes |
-| `r-release-linux.yml` | Builds source tarball + binary packages, publishes a GitHub Release | Yes |
+| `r-release.yml` | Builds source tarball + binary packages, publishes a GitHub Release | Yes |
 | `deploy-prism.yml` | Deploys release artifacts to a PRISM instance after the release completes | No |
 
-`release.yml` is a short file that you generally don't need to modify. All the build logic and customization points live in `r-release-linux.yml`.
+All the build logic and customization points live in `r-release.yml`. All deploy customization points live in `deploy-prism.yml`
 
 ### Cookbook
 
 #### Step 1: Copy the workflow files
 
-Download the two required files (and optionally the PRISM deploy file) into `.github/workflows/`:
+Download `r-release.yml` (and optionally `deploy-prism.yml`) into `.github/workflows/`:
 
 ```bash
 mkdir -p .github/workflows
 
-curl -sL https://raw.githubusercontent.com/a2-ai-prism-ecosystem/r-package-workflows/main/.github/workflows/release.yml \
-  -o .github/workflows/release.yml
-
-curl -sL https://raw.githubusercontent.com/a2-ai-prism-ecosystem/r-package-workflows/main/.github/workflows/r-release-linux.yml \
-  -o .github/workflows/r-release-linux.yml
+curl -sL https://raw.githubusercontent.com/a2-ai-prism-ecosystem/r-package-workflows/main/.github/workflows/r-release.yml \
+  -o .github/workflows/r-release.yml
 
 # Optional — only if you use PRISM
 curl -sL https://raw.githubusercontent.com/a2-ai-prism-ecosystem/r-package-workflows/main/.github/workflows/deploy-prism.yml \
   -o .github/workflows/deploy-prism.yml
 ```
 
-#### Step 2: Configure `r-release-linux.yml`
+#### Step 2: Configure `r-release.yml`
 
 ##### Compiled-language toolchain, system dependencies, and other platform steps
 
-If your package uses a compiled language, add the installation steps where the `TODO` blocks appear. There are TODO blocks in `build-primary`, `build-bin-bare`, and `build-bin-container` — add matching steps in each. For example, a Rust-based package would add:
+If your package uses a compiled language, add the installation steps where the `TODO` blocks appear. There are TODO blocks in `build-primary`, `build-bin-bare`, and `build-bin-linux-container` — add matching steps in each. For example, a Rust-based package would add:
 
 ```yaml
       - name: Install Rust
@@ -177,7 +168,7 @@ Each job also has a `TODO` block for system library installation. Add your packa
           fi
 ```
 
-Keep the same system dependency list in `build-primary` and `build-bin-container`. For `build-bin-bare` (which runs on Ubuntu bare-metal runners), use `apt` package names instead (e.g. `libcurl4-openssl-dev` instead of `libcurl-devel`).
+Keep the same system dependency list in `build-primary` and `build-bin-linux-container`. For `build-bin-bare` (which runs on Ubuntu bare-metal runners), use `apt` package names instead (e.g. `libcurl4-openssl-dev` instead of `libcurl-devel`).
 
 ##### Build options
 
@@ -264,11 +255,13 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-This triggers `release.yml`, which calls `r-release-linux.yml` to build the source tarball, build binaries for each platform in the matrix, and publish everything as a GitHub Release.
+This triggers `r-release.yml` to build the source tarball, build binaries for each platform in the matrix, and publish everything as a GitHub Release.
 
 Tags ending in `-rc<N>` (e.g. `v1.0.0-rc1`) are published as **pre-releases**.
 
 Both workflows also support `workflow_dispatch` for on-demand runs from the Actions tab.
+
+If `deploy-prism.yml` is included, then that workflow will fire upon completion of `r-release.yml` and push the release artifacts to the specified PRISM instance, additionally performing any edition updates configured in the workflow.
 
 #### Step 5: Verify
 
@@ -278,64 +271,56 @@ Both workflows also support `workflow_dispatch` for on-demand runs from the Acti
 
 ## Release and Deploy Workflow reference
 
-### `release.yml`
+### `r-release.yml`
 
-Thin orchestrator that triggers the build workflow. Users generally don't modify this file.
+Reusable build workflow. This is where all R package building of src and binary tarballs happens.
 
 - **Triggers:** `push` on `v*` tags, `workflow_dispatch` with a `tag` input
-- **Jobs:** `release-linux` — calls `r-release-linux.yml` via `workflow_call`, passing the tag
 
-### `r-release-linux.yml`
-
-Reusable build workflow (called via `workflow_call`). This is where all customization happens.
-
-#### Triggers
-
-Called by `release.yml` (or any workflow) with a `tag` input via `workflow_call`.
-
-#### Jobs
+#### Release Jobs
 
 | Job | Description |
 | --- | --- |
+| `determine-tag` | Sets the tag variable depending on the invocation of this workflow |
 | `plan-matrices` | Emits the bare-metal and container JSON arrays that drive the matrix builds |
 | `build-primary` | Builds source tarball + one binary on the primary platform (AlmaLinux 8). Publishes both to the GitHub Release. |
-| `build-bin-bare` | Matrix job — builds binaries on bare-metal runners. Skipped if the bare-metal array is empty. |
-| `build-bin-container` | Matrix job — builds binaries in containers. Skipped if the container array is empty. |
+| `build-bin-bare` | Matrix job — builds binaries on bare-metal runners of any OS type. Skipped if the bare-metal array is empty. |
+| `build-bin-linux-container` | Matrix job — builds binaries in linux containers. Skipped if the container array is empty. |
 | `finalize-manifest` | Merges all per-build `manifest.json` files into one and attaches it to the release. Runs even if some matrix jobs fail. |
 
 #### Key customization points
 
 | What | Where | Notes |
 | --- | --- | --- |
-| Toolchain | TODO blocks in `build-primary`, `build-bin-bare`, `build-bin-container` | Language toolchains, etc. Add matching steps in each block for each OS |
+| Toolchain | TODO blocks in `build-primary`, `build-bin-bare`, `build-bin-linux-container` | Language toolchains, etc. Add matching steps in each block for each OS |
 | System deps | TODO blocks in each build job | RPM names for container jobs, deb names for bare-metal |
 | Build options | `build-primary` > Build source tarball | `resave-data`, `build-vignettes` |
 | Platform matrices | `plan-matrices` job | Two JSON arrays: bare-metal + container |
 
 ---
 
-### `deploy-prism.yml`
+### `deploy-prism.yml` (optional)
 
-Deploys release artifacts to a PRISM instance after `R Release Orchestrator` completes.
+Deploys release artifacts to a PRISM instance after `r-release.yml` completes. You may include only if your package requires deployment to PRISM.
 
 #### Triggers
 
 | Trigger | Behavior |
 | --- | --- |
-| `workflow_run` | Auto-triggers after "R Release Orchestrator" completes successfully |
+| `workflow_run` | Auto-triggers after "R Build and Release" (`r-release.yml` workflow name) completes successfully |
 | `workflow_dispatch` | Manual deploy of a specific tag with full control over edition settings |
 
 #### `env:` block (auto-deploy defaults)
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `AUTO_UPDATE_EDITION` | `'true'` | Push this package version into the shared edition |
+| `AUTO_UPDATE_EDITION` | `'false'` | Push this package version into a shared edition |
 | `AUTO_CREATE_EDITION` | `'false'` | Create a standalone edition scoped to this package |
 | `AUTO_LATEST_EDITION` | `'false'` | Mark the individual package edition as "latest" |
 | `REGISTRY` | `'FIXME'` | PRISM registry name |
 | `EDITION` | `'FIXME'` | PRISM edition name |
 
-#### Jobs
+#### Deploy Jobs
 
 | Job | Description |
 | --- | --- |

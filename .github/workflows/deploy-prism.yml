@@ -31,7 +31,7 @@ name: Deploy to PRISM
 on:
   # Auto-trigger: runs after the "R Release" workflow completes successfully.
   workflow_run:
-    workflows: ["R Release Orchestrator"]
+    workflows: ["R Build and Release"]
     types:
       - completed
 
@@ -80,7 +80,7 @@ env:
   # a successful R Release. Manual dispatch overrides them via inputs above.
   # FIXME: Set these to match your PRISM registry and edition.
   # ===========================================================================
-  AUTO_UPDATE_EDITION: 'true'       # Push this version into the shared edition
+  AUTO_UPDATE_EDITION: 'false'      # Push this version into a shared edition
   AUTO_CREATE_EDITION: 'false'      # Create an individual package edition (package_name/package_version)
   AUTO_LATEST_EDITION: 'false'      # Mark the individual package edition as "latest"
   REGISTRY: 'FIXME'                 # FIXME: Your PRISM registry name (e.g. 'my-org-registry')
