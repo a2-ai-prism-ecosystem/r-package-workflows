@@ -434,6 +434,10 @@ jobs:
       # by the platforms specified in the matrix.
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       
+      # -- Install rv and resolve R package dependencies ---------------------
+      - name: Install the latest version of rv
+        uses: a2-ai/setup-rv@main
+
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # TODO: If your package relies on system libraries, add
       # the installation steps here.
@@ -441,10 +445,6 @@ jobs:
       # NOTE: remember to add steps for each OS type required 
       # by the platforms specified in the matrix.
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-      # -- Install rv and resolve R package dependencies ---------------------
-      - name: Install the latest version of rv
-        uses: a2-ai/setup-rv@main
 
       - name: Pin R version in rproject.toml
         run: |
